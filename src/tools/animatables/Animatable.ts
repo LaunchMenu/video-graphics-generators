@@ -45,6 +45,7 @@ export class Animatable<
      * @returns Whether the animation finished
      */
     public async step(delta: number): Promise<boolean> {
+        this.data.continuousStep?.(delta);
         if (this.started && !this.hasFinished) {
             const finished = await this.data.step(delta);
             if (finished) {
@@ -52,7 +53,6 @@ export class Animatable<
                 this.finish();
             }
         }
-        this.data.continuousStep?.(delta);
         return this.hasFinished;
     }
 

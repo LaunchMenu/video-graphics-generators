@@ -1,5 +1,6 @@
 import {IProcessGetter} from "../_types/IProccessGetter";
 import {ISequenceable} from "../_types/ISequenceable";
+import {wait} from "./wait";
 
 export class Sequence implements ISequenceable {
     protected process: IProcessGetter;
@@ -92,9 +93,8 @@ export class Sequence implements ISequenceable {
      * @returns The created time sequence
      */
     public static timed(sequence: ISequenceable, delay: number): ISequenceable {
-        return new Sequence(res => {
+        return new Sequence(async () => {
             sequence.start();
-            setTimeout(res, delay);
-        });
+        }).next(wait(delay));
     }
 }

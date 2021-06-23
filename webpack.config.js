@@ -18,6 +18,10 @@ module.exports = env => ({
                     name: "[path][name].[ext]",
                 },
             },
+            {
+                test: /\.(txt|frag|vert)$/i,
+                use: "raw-loader",
+            },
         ],
     },
     devServer: {

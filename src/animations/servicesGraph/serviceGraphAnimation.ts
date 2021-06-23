@@ -1,15 +1,19 @@
-import {Container, Graphics, Loader, Sprite, Texture} from "pixi.js";
+import {Texture} from "pixi.js";
 import {AnimationContainer} from "../../tools/animatables/AnimationContainer";
 import {IAnimationSource} from "../../_types/IAnimationSource";
 import {Line} from "./Line";
-import {LineSegment} from "./LineSegment";
 import {TransitionIn} from "../../tools/animatables/TransitionIn";
 import {transitions} from "../../tools/animatables/transitions";
 import {loadImages} from "../../tools/loadImages";
 import {ease} from "../../tools/ease";
 import {Icon} from "./Icon";
 import {Sequence} from "../../tools/sequence/Sequence";
-import {wait} from "../../tools/sequence/wait";
+import {wait, waitUpdater} from "../../tools/sequence/wait";
+import {IPoint} from "./_types/IPoint";
+import {Camera} from "../../tools/camera/Camera";
+import {CameraMove} from "../../tools/camera/CameraMove";
+import {LineFilter} from "./filter/line/LinerFilter";
+import {PathFollower} from "../../tools/camera/PathFollower";
 
 import calendar from "./images/calendar.svg";
 import chat from "./images/chat.svg";
@@ -24,8 +28,6 @@ import translate from "./images/translate.svg";
 import weather from "./images/weather.svg";
 import user from "./images/user.svg";
 import functions from "./images/functions.svg";
-import {IPoint} from "./_types/IPoint";
-import {Camera} from "../../tools/camera/Camera";
 
 type IService = {
     texture: Texture;
@@ -57,8 +59,8 @@ export const serviceGraphAnimation: IAnimationSource = {
 
         const userData = {
             texture: images.user,
-            pos: {x: 960, y: 900},
-            size: 200,
+            pos: {x: 960, y: 950},
+            size: 300,
             color: 0x35a3f7,
         };
         const userYPos = userData.pos.y - userData.size / 2;
@@ -74,50 +76,12 @@ export const serviceGraphAnimation: IAnimationSource = {
                     {x: 910, y: userYPos},
                 ],
             },
-            music: {
-                texture: images.music,
-                pos: {x: 850, y: 400},
-                edge: [
-                    {x: 950, y: 400},
-                    {x: 950, y: userYPos},
-                ],
-                offline: true,
-            },
             calendar: {
                 texture: images.calendar,
                 pos: {x: 250, y: 550},
                 edge: [
                     {x: 870, y: 550},
                     {x: 870, y: userYPos},
-                ],
-            },
-            translate: {
-                texture: images.translate,
-                pos: {x: 1800, y: 250},
-                edge: [
-                    {x: 1320, y: 250},
-                    {x: 1320, y: 420},
-                    {x: 1030, y: 420},
-                    {x: 1030, y: userYPos},
-                ],
-            },
-            folder: {
-                texture: images.folder,
-                pos: {x: 1500, y: 650},
-                edge: [
-                    {x: 1070, y: 650},
-                    {x: 1070, y: userYPos},
-                ],
-                offline: true,
-            },
-            email: {
-                texture: images.email,
-                pos: {x: 1300, y: 100},
-                edge: [
-                    {x: 1120, y: 100},
-                    {x: 1120, y: 220},
-                    {x: 990, y: 220},
-                    {x: 990, y: userYPos},
                 ],
             },
             people: {
@@ -130,14 +94,12 @@ export const serviceGraphAnimation: IAnimationSource = {
                     {x: 890, y: userYPos},
                 ],
             },
-            cloud: {
-                texture: images.cloud,
-                pos: {x: 1600, y: 350},
+            weather: {
+                texture: images.weather,
+                pos: {x: 600, y: 700},
                 edge: [
-                    {x: 1340, y: 350},
-                    {x: 1340, y: 440},
-                    {x: 1050, y: 440},
-                    {x: 1050, y: userYPos},
+                    {x: 850, y: 700},
+                    {x: 850, y: userYPos},
                 ],
             },
             cloudDone: {
@@ -149,21 +111,14 @@ export const serviceGraphAnimation: IAnimationSource = {
                     {x: 930, y: userYPos},
                 ],
             },
-            weather: {
-                texture: images.weather,
-                pos: {x: 600, y: 700},
+            music: {
+                texture: images.music,
+                pos: {x: 850, y: 400},
                 edge: [
-                    {x: 850, y: 700},
-                    {x: 850, y: userYPos},
+                    {x: 950, y: 400},
+                    {x: 950, y: userYPos},
                 ],
-            },
-            questionAndAnswer: {
-                texture: images.questionAndAnswer,
-                pos: {x: 1250, y: 350},
-                edge: [
-                    {x: 1010, y: 350},
-                    {x: 1010, y: userYPos},
-                ],
+                offline: true,
             },
             functions: {
                 texture: images.functions,
@@ -174,10 +129,60 @@ export const serviceGraphAnimation: IAnimationSource = {
                 ],
                 offline: true,
             },
+            questionAndAnswer: {
+                texture: images.questionAndAnswer,
+                pos: {x: 1250, y: 350},
+                edge: [
+                    {x: 1010, y: 350},
+                    {x: 1010, y: userYPos},
+                ],
+            },
+            email: {
+                texture: images.email,
+                pos: {x: 1300, y: 100},
+                edge: [
+                    {x: 1120, y: 100},
+                    {x: 1120, y: 220},
+                    {x: 990, y: 220},
+                    {x: 990, y: userYPos},
+                ],
+            },
+            folder: {
+                texture: images.folder,
+                pos: {x: 1500, y: 650},
+                edge: [
+                    {x: 1070, y: 650},
+                    {x: 1070, y: userYPos},
+                ],
+                offline: true,
+            },
+            cloud: {
+                texture: images.cloud,
+                pos: {x: 1600, y: 350},
+                edge: [
+                    {x: 1340, y: 350},
+                    {x: 1340, y: 440},
+                    {x: 1050, y: 440},
+                    {x: 1050, y: userYPos},
+                ],
+            },
+            translate: {
+                texture: images.translate,
+                pos: {x: 1800, y: 250},
+                edge: [
+                    {x: 1320, y: 250},
+                    {x: 1320, y: 420},
+                    {x: 1030, y: 420},
+                    {x: 1030, y: userYPos},
+                ],
+            },
             user: userData,
         };
 
         // Setup the icons
+        const iconsContainer = new AnimationContainer();
+        scene.addChild(iconsContainer);
+
         const icons = Object.values(services).map(
             data =>
                 new TransitionIn({
@@ -191,9 +196,20 @@ export const serviceGraphAnimation: IAnimationSource = {
                     easing: ease.inElastic,
                 })
         );
-        scene.addChild(...icons);
+        iconsContainer.addChild(...icons);
 
         // Setup the edges
+        const edgeContainer = new AnimationContainer();
+        const transitionEdgeIn = new TransitionIn({
+            item: edgeContainer,
+            type: transitions.fade,
+            duration: 2000,
+        });
+        scene.addChild(transitionEdgeIn);
+        edgeContainer.filters = [
+            new LineFilter({color: 0x35a3f7, blurQuality: 30, blurStrength: 40}),
+        ];
+
         const edges = Object.values(services)
             .filter((data): data is IService => "edge" in data)
             .map(data => {
@@ -213,66 +229,62 @@ export const serviceGraphAnimation: IAnimationSource = {
                     ],
                     color: 0x0e4bf1,
                     width: 6,
-                    // speed: 100,
-                    duration: 10000,
-                    easing: ease.outCubic,
+                    duration: 8000,
+                    data: {
+                        speed: 300,
+                        showTransDuration: 300,
+                    },
+                    easing: ease.inOutDegree(1.4, 2),
                 });
             });
-        scene.addChild(...edges);
+        edgeContainer.addChild(...edges);
 
         // Animate the camera
         const width = 1920,
             height = 1080;
-        const follow = [0, 3, 6];
         const camera = new Camera({
             target: scene,
             size: {width, height},
-            paths: {
-                zoomOut: {
-                    points: [
-                        {...[...edges[follow[2]].points].reverse()[0], zoom: 2},
-                        {x: width / 2, y: height / 2, zoom: 1},
-                    ],
-                    duration: 3000,
-                    easing: ease.inOutCubic,
-                },
-                followLine: {
-                    targets: [
-                        {
-                            target: edges[follow[0]],
-                            duration: 2000,
-                            zoom: 2,
-                        },
-                        {
-                            target: edges[follow[1]],
-                            duration: 2000,
-                            zoom: 2,
-                        },
-                        {
-                            target: edges[follow[2]],
-                            duration: 4500,
-                            zoom: 2,
-                        },
-                    ],
-                },
-            },
+        });
+
+        const panRight = new PathFollower({
+            camera,
+            duration: 11000,
+            points: [
+                {x: 200, y: 400, zoom: 1.7},
+                {x: 1400, y: 400, zoom: 1.3},
+            ],
+            easing: ease.inOutDegree(1.4),
+        });
+        const zoomOut = new CameraMove({
+            camera,
+            duration: 8000,
+            point: () => ({x: width / 2, y: height / 2, zoom: 1}),
+            easing: ease.inOutQuad,
         });
         scene.addChild(camera);
 
         // Setup the animation sequence
-        wait(500)
-            .next(Sequence.chain(...icons.map(icon => Sequence.timed(icon, 600))))
-            .next(wait(1000))
+        const seq = wait(500)
             .next(
-                camera.paths.followLine.next(camera.paths.zoomOut),
-                wait(300).next(...edges)
+                panRight,
+                Sequence.chain(...icons.map(icon => Sequence.timed(icon, 800)))
             )
-            .next(wait(500))
-            .start();
+            .next(zoomOut, transitionEdgeIn, ...edges)
+            .next(wait(10000));
+        seq.start();
+        let finished = false;
+        seq.finished.then(() => {
+            finished = true;
+        });
 
         return {
             scene,
-            step: delta => scene.step(delta),
+            step: async delta => {
+                await waitUpdater.step(delta);
+                await scene.step(delta);
+                return finished;
+            },
             backgroundColor: 0xffffff,
         };
     },

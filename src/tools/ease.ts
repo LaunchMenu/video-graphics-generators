@@ -41,4 +41,27 @@ export const ease = {
         (t -= 0.5) < 0
             ? (0.02 + 0.01 / t) * Math.sin(50 * t)
             : (0.02 - 0.01 / t) * Math.sin(50 * t) + 1,
+
+    /**
+     * accelerating from zero velocity
+     * @param degree The degree of the curve
+     */
+    inDegree: (degree: number) => (t: number) => Math.pow(t, degree),
+    /**
+     * decelerating to zero velocity
+     * @param degree The degree of the curve
+     */
+    outDegree: (degree: number) => (t: number) => 1 - Math.pow(1 - t, degree),
+    /**
+     * acceleration until halfway, then deceleration
+     * @param degree The degree of the curve
+     * @param outDegree THe out degree of the curve
+     */
+    inOutDegree:
+        (degree: number, outDegree: number = degree) =>
+        (t: number) =>
+            t < 0.5
+                ? Math.pow(t * 2, degree) / 2
+                : (1 - Math.pow(2 - t * 2, outDegree)) / 2 + 0.5,
+    // TODO: test if custom degree ones work
 };
